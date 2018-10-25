@@ -1,22 +1,19 @@
 /****************************************************************************
 **
 ** Copyright (c) 2008-2015 C.B. Barber. All rights reserved.
-** $Id: //main/2015/qhull/src/qhulltest/qhulltest.cpp#4 $$Change: 2064 $
-** $DateTime: 2016/01/18 12:36:08 $$Author: bbarber $
+** $Id: //main/2015/qhull/src/qhulltest/qhulltest.cpp#5 $$Change: 2079 $
+** $DateTime: 2016/02/07 17:43:34 $$Author: bbarber $
 **
 ****************************************************************************/
 
 //pre-compiled headers
-extern "C" {
-    #include "libqhull_r/user_r.h"
-}
+#include "libqhull_r/user_r.h"
+
 #include <iostream>
 #include "RoadTest.h" // QT_VERSION
 
 #include "libqhullcpp/RoadError.h"
-extern "C" {
-    #include "libqhull_r/qhull_ra.h"
-}
+#include "libqhull_r/qhull_ra.h"
 
 #include <sstream>
 #include <stdexcept>

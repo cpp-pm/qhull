@@ -59,9 +59,9 @@
 #  
 # $Id: //main/2015/qhull/CMakeLists.txt#8 $$Change: 2066 $
 # $DateTime: 2016/01/18 19:29:17 $$Author: bbarber $
+cmake_minimum_required(VERSION 3.2)
+project(qhull VERSION 7.2.0)
 
-project(qhull)
-cmake_minimum_required(VERSION 2.6)
 
 # Define qhull_VERSION in CMakeLists.txt, Makefile, qhull-exports.def, qhull_p-exports.def, qhull_r-exports.def, qhull-warn.pri
 set(qhull_VERSION2 "2015.2 2016/01/18")  # not used, See global.c, global_r.c, rbox.c, rbox_r.c
@@ -74,32 +74,47 @@ include(CMakeModules/CheckLFS.cmake)
 option(WITH_LFS "Enable Large File Support" ON)
 check_lfs(WITH_LFS)
 
-if(INCLUDE_INSTALL_DIR)
-else()
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include)
-endif()
+include(GNUInstallDirs)
+set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+set(include_install_dir "incllude")
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${version_config}" COMPATIBILITY SameMajorVersion
+)
+configure_package_config_file(
+    "CMakeModules/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${config_install_dir}"
+) 
+
 if(LIB_INSTALL_DIR)
 else()
-set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+set(LIB_INSTALL_DIR lib)
 endif()
 if(BIN_INSTALL_DIR)
 else()
-set(BIN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/bin)
+set(BIN_INSTALL_DIR bin)
 endif()
 if(MAN_INSTALL_DIR)
 else()
     if(WIN32)
-        set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/man/man1)
+        set(MAN_INSTALL_DIR man/man1)
     else()
-        set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man/man1)
+        set(MAN_INSTALL_DIR share/man/man1)
     endif()
 endif()
 if(DOC_INSTALL_DIR)
 else()
     if(WIN32)
-        set(DOC_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/doc)
+        set(DOC_INSTALL_DIR doc)
     else()
-        set(DOC_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/doc/qhull)
+        set(DOC_INSTALL_DIR share/doc/qhull)
     endif()
 endif()
 message(STATUS)
@@ -108,7 +123,7 @@ message(STATUS "Build Version:                             ${qhull_VERSION}")
 message(STATUS "Install Prefix (CMAKE_INSTALL_PREFIX):     ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Binary Directory (BIN_INSTALL_DIR):        ${BIN_INSTALL_DIR}")
 message(STATUS "Library Directory (LIB_INSTALL_DIR):       ${LIB_INSTALL_DIR}")
-message(STATUS "Include Directory (INCLUDE_INSTALL_DIR):   ${INCLUDE_INSTALL_DIR}")
+message(STATUS "Include Directory (include_install_dir):   ${include_install_dir}")
 message(STATUS "Documentation Directory (DOC_INSTALL_DIR): ${DOC_INSTALL_DIR}")
 message(STATUS "Man Pages Directory (MAN_INSTALL_DIR):     ${MAN_INSTALL_DIR}")
 message(STATUS "Build Type (CMAKE_BUILD_TYPE):             ${CMAKE_BUILD_TYPE}")
@@ -330,21 +345,14 @@ set(
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-if(CMAKE_BUILD_TYPE MATCHES "[dD]ebug")
-    set(qhull_CPP qhullcpp_d)
-    set(qhull_SHARED qhull_d) 
-    set(qhull_SHAREDP qhull_pd)
-    set(qhull_SHAREDR qhull_rd)
-    set(qhull_STATIC qhullstatic_d)
-    set(qhull_STATICR qhullstatic_rd)
-else()
-    set(qhull_CPP qhullcpp)
-    set(qhull_SHARED libqhull)  # Temporarily avoid name conflict with qhull executable
-    set(qhull_SHAREDP qhull_p)
-    set(qhull_SHAREDR qhull_r)
-    set(qhull_STATIC qhullstatic)
-    set(qhull_STATICR qhullstatic_r)
-endif()
+
+set(qhull_CPP qhullcpp)
+set(qhull_SHARED libqhull)  # Temporarily avoid name conflict with qhull executable
+set(qhull_SHAREDP qhull_p)
+set(qhull_SHAREDR qhull_r)
+set(qhull_STATIC qhullstatic)
+set(qhull_STATICR qhullstatic_r)
+
 
 set(
     qhull_TARGETS_INSTALL
@@ -611,16 +619,30 @@ add_test(NAME user_eg3
 # ---------------------------------------
 
 install(TARGETS ${qhull_TARGETS_INSTALL}
-        RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-        LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-        ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+		EXPORT ${TARGETS_EXPORT_NAME}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		BUNDLE	DESTINATION ${CMAKE_INSTALL_BINDIR}
+		INCLUDES DESTINATION ${include_install_dir})
 
-install(FILES ${libqhull_HEADERS}    DESTINATION ${INCLUDE_INSTALL_DIR}/libqhull)
-install(FILES ${libqhull_DOC}        DESTINATION ${INCLUDE_INSTALL_DIR}/libqhull)
-install(FILES ${libqhullr_HEADERS}    DESTINATION ${INCLUDE_INSTALL_DIR}/libqhull_r)
-install(FILES ${libqhullr_DOC}        DESTINATION ${INCLUDE_INSTALL_DIR}/libqhull_r)
-install(FILES ${libqhullcpp_HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR}/libqhullcpp)
+install(FILES ${libqhull_HEADERS}    DESTINATION ${include_install_dir}/libqhull)
+install(FILES ${libqhull_DOC}        DESTINATION ${include_install_dir}/libqhull)
+install(FILES ${libqhullr_HEADERS}    DESTINATION ${include_install_dir}/libqhull_r)
+install(FILES ${libqhullr_DOC}        DESTINATION ${include_install_dir}/libqhull_r)
+install(FILES ${libqhullcpp_HEADERS} DESTINATION ${include_install_dir}/libqhullcpp)
 install(FILES html/qhull.man         DESTINATION ${MAN_INSTALL_DIR} RENAME qhull.1)
 install(FILES html/rbox.man          DESTINATION ${MAN_INSTALL_DIR} RENAME rbox.1)
 install(FILES ${doc_FILES}           DESTINATION ${DOC_INSTALL_DIR})
 install(DIRECTORY html/              DESTINATION ${DOC_INSTALL_DIR})
+
+install(
+    FILES "${project_config}" "${version_config}"
+    DESTINATION "${config_install_dir}"
+)
+
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${config_install_dir}"
+)
